@@ -12,7 +12,7 @@ async function callClaude(systemPrompt, userPrompt) {
     },
     body: JSON.stringify({
       model: 'llama-3.1-8b-instant',
-      max_tokens: 800,
+      max_tokens: 600,
       temperature: 0.2,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -48,32 +48,15 @@ function safeParseJSON(text) {
   }
 }
 
-// ── MODULE 2: REPORT ANALYSIS ─────────────
+// ── REPORT ANALYSIS ───────────────────────
 async function analyzeReport(extractedText, patientProfile) {
-  const trimmedText = extractedText.slice(0, 1200); // prevent token overflow
+  const trimmedText = extractedText.slice(0, 1200);
 
-  const system = `You are Pulse — an AI medical report analyzer.
+  const system = `Return ONLY valid JSON:
 
-Return ONLY valid JSON. No explanation.
-
-Rules:
-- Max 5 test values
-- Always complete JSON
-- Keep output short
-
-Format:
 {
   "reportType": "string",
-  "extractedValues": [
-    {
-      "name": "test",
-      "value": number,
-      "unit": "unit",
-      "normalRange": "range",
-      "status": "normal|low|high|critical",
-      "aiExplanation": "short explanation"
-    }
-  ],
+  "extractedValues": [],
   "abnormalCount": number,
   "overallSummary": "short summary"
 }`;
@@ -88,44 +71,88 @@ ${trimmedText}`;
   return safeParseJSON(raw);
 }
 
-// ── MODULE 2: Q&A (STRICT CONTROL) ────────
-async function answerReportQuestion(question, report, patientProfile, qaHistory) {
-  const system = `You are Pulse — an AI assistant for explaining a user's medical lab report.
+// ── REPORT Q&A ────────────────────────────
+async function answerReportQuestion(question, report) {
+  const system = `You are Pulse. Answer ONLY questions related to the report.
 
-STRICT RULES:
-- Only answer questions related to the lab report
-- Allowed topics:
-  - meaning of values
-  - high/low reasons
-  - lifestyle changes
-  - health risks (general only)
+If unrelated, reply:
+"I’m Pulse, and I can only help with questions about your health report."
 
-- If question is unrelated, reply EXACTLY:
-"I can only help with questions related to your lab report."
+Keep under 120 words.`;
 
-- Do NOT answer general questions, identity questions, or random chat
-- Do NOT diagnose or prescribe treatment
-- Always include: "Please consult your doctor" if giving health suggestions
-- Keep answers under 120 words
-`;
+  const user = `Summary: ${report.overallSummary}
+Values: ${JSON.stringify(report.extractedValues)}
 
-  const history = qaHistory
-    .map(m => `${m.role === 'user' ? 'User' : 'Pulse'}: ${m.content}`)
-    .join('\n');
-
-  const user = `Report Summary:
-${report.overallSummary}
-
-Report Values:
-${JSON.stringify(report.extractedValues)}
-
-Conversation History:
-${history || 'None'}
-
-User Question:
-${question}`;
+Question: ${question}`;
 
   return await callClaude(system, user);
 }
 
-module.exports = { analyzeReport, answerReportQuestion };
+// ── ✅ FIXED INTAKE FLOW (NO AI QUESTIONS) ───────────────
+function generateNextIntakeQuestion(transcript) {
+  const questions = [
+    // Patient details
+    "What is your name?",
+    "What is your age?",
+    "What is your gender?",
+    "What is your blood group?",
+
+    // Medical intake (clean flow)
+    "Describe briefly what brings you in today.",
+    "How long have you been experiencing this?",
+    "How much is it affecting you? (mild / moderate / severe)",
+    "Have you noticed any pattern, trigger, or change?",
+    "Do you have any existing medical conditions?"
+  ];
+
+  const patientAnswers = transcript.filter(m => m.role === 'patient').length;
+
+  if (patientAnswers >= questions.length) {
+    return "INTAKE_COMPLETE";
+  }
+
+  return questions[patientAnswers];
+}
+
+// ── DOCTOR BRIEF (SMARTER) ───────────────
+async function generateDoctorBrief(transcript, patientProfile) {
+  const system = `You are generating a structured clinical summary.
+
+Return ONLY valid JSON:
+
+{
+  "chiefComplaint": "short phrase",
+  "hpi": "brief history of present illness",
+  "associatedFactors": "any relevant symptoms or factors",
+  "pastHistory": "previous conditions or history",
+  "clinicalImpression": "overall clinical impression",
+  "urgencyLevel": "low|moderate|high"
+}
+
+Rules:
+- Keep each field 1–2 lines
+- Do NOT leave fields empty
+- Infer if needed`;
+
+  const conversation = transcript
+    .map(m => `${m.role === 'patient' ? 'Patient' : 'AI'}: ${m.content}`)
+    .join('\n');
+
+  const user = `Patient age: ${patientProfile?.age || 'unknown'}
+Conditions: ${patientProfile?.conditions?.join(', ') || 'none'}
+
+Conversation:
+${conversation}
+
+Generate structured summary.`;
+
+  const raw = await callClaude(system, user);
+  return safeParseJSON(raw);
+}
+
+module.exports = {
+  analyzeReport,
+  answerReportQuestion,
+  generateNextIntakeQuestion,
+  generateDoctorBrief
+};

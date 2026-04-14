@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Reports from './pages/Reports';
 import ReportDetail from './pages/ReportDetail';
+import Intake from './pages/Intake';
 
 function ProtectedRoute({ children, role }) {
   const { token, user } = useAuthStore();
@@ -46,6 +47,13 @@ function Dashboard() {
             className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700"
           >
             View Reports
+          </button>
+
+          <button
+            onClick={() => navigate('/intake')}
+            className="flex-1 border border-blue-200 text-blue-600 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-50"
+          >
+            Start check-in
           </button>
         </div>
       </div>
@@ -92,6 +100,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReportDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/intake"
+          element={
+            <ProtectedRoute>
+              <Intake />
             </ProtectedRoute>
           }
         />
