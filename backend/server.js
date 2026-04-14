@@ -14,6 +14,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/patient', require('./routes/patient'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/intake', require('./routes/intake'));
+app.use('/api/healthtwin', require('./routes/healthtwin'));
 
 app.get('/', (req, res) => res.json({ message: 'Pulse API running' }));
 

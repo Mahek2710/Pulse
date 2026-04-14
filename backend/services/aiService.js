@@ -91,13 +91,10 @@ Question: ${question}`;
 // ── ✅ FIXED INTAKE FLOW (NO AI QUESTIONS) ───────────────
 function generateNextIntakeQuestion(transcript) {
   const questions = [
-    // Patient details
     "What is your name?",
     "What is your age?",
     "What is your gender?",
     "What is your blood group?",
-
-    // Medical intake (clean flow)
     "Describe briefly what brings you in today.",
     "How long have you been experiencing this?",
     "How much is it affecting you? (mild / moderate / severe)",
@@ -150,9 +147,61 @@ Generate structured summary.`;
   return safeParseJSON(raw);
 }
 
+// ── Module 3: Health Twin ──────────────────────────────────
+async function computeRiskScore(healthState) {
+  const system = `You are a health risk assessment engine. Given a patient's health state, compute a risk score from 0-100 (0=very healthy, 100=critical risk) and explain the top drivers. Return ONLY valid JSON, no markdown:
+{
+  "riskScore": number,
+  "note": "one sentence naming the top 2-3 risk drivers"
+}
+
+Scoring guide:
+- Normal healthy adult: 10-25
+- One controlled condition: 25-40
+- Multiple conditions or poor lifestyle: 40-60
+- Uncontrolled conditions + poor adherence: 60-80
+- Critical values or emergency indicators: 80-100`;
+
+  const user = `Health state:
+Vitals: ${JSON.stringify(healthState.vitals || {})}
+Conditions: ${(healthState.conditions || []).join(', ') || 'none'}
+Medications: ${JSON.stringify(healthState.medications || [])}
+Lifestyle: ${JSON.stringify(healthState.lifestyle || {})}
+
+Compute the risk score.`;
+
+  const raw = await callClaude(system, user);
+  return safeParseJSON(raw);
+}
+
+async function runScenario(healthState, interventions, label) {
+  const system = `You are a health scenario advisor. Given a patient's current health state and a proposed lifestyle or medication intervention, estimate the new risk score and explain the causal chain. Return ONLY valid JSON, no markdown:
+{
+  "projectedRisk": number,
+  "causalExplanation": "2-3 sentences explaining exactly why this intervention changes the risk, mentioning specific health parameters"
+}`;
+
+  const user = `Current health state:
+Vitals: ${JSON.stringify(healthState.vitals || {})}
+Conditions: ${(healthState.conditions || []).join(', ') || 'none'}
+Medications: ${JSON.stringify(healthState.medications || [])}
+Lifestyle: ${JSON.stringify(healthState.lifestyle || {})}
+Current risk score: ${healthState.riskScore || 'unknown'}
+
+Scenario: "${label}"
+Proposed interventions: ${JSON.stringify(interventions)}
+
+What is the projected risk and causal explanation?`;
+
+  const raw = await callClaude(system, user);
+  return safeParseJSON(raw);
+}
+
 module.exports = {
   analyzeReport,
   answerReportQuestion,
   generateNextIntakeQuestion,
-  generateDoctorBrief
+  generateDoctorBrief,
+  computeRiskScore,
+  runScenario
 };

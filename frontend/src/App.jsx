@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Reports from './pages/Reports';
 import ReportDetail from './pages/ReportDetail';
 import Intake from './pages/Intake';
+import HealthTwin from './pages/HealthTwin';
 
 function ProtectedRoute({ children, role }) {
   const { token, user } = useAuthStore();
@@ -54,6 +55,13 @@ function Dashboard() {
             className="flex-1 border border-blue-200 text-blue-600 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-50"
           >
             Start check-in
+          </button>
+
+          <button
+            onClick={() => navigate('/healthtwin')}
+            className="flex-1 border border-purple-200 text-purple-600 py-2.5 rounded-xl text-sm font-medium hover:bg-purple-50"
+          >
+            Health Twin
           </button>
         </div>
       </div>
@@ -109,6 +117,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Intake />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/healthtwin"
+          element={
+            <ProtectedRoute>
+              <HealthTwin />
             </ProtectedRoute>
           }
         />
