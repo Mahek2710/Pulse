@@ -15,7 +15,9 @@ app.use('/api/patient', require('./routes/patient'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/intake', require('./routes/intake'));
 app.use('/api/healthtwin', require('./routes/healthtwin'));
+app.use('/api/doctor', require('./routes/doctor'));
 
+ 
 app.get('/', (req, res) => res.json({ message: 'Pulse API running' }));
 
 const PORT = process.env.PORT || 5000;

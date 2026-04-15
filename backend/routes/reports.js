@@ -60,6 +60,14 @@ router.post('/upload', auth, upload.single('report'), async (req, res) => {
     });
     profile.healthState.lastUpdated = new Date();
 
+    // 5. Auto-update health state vitals from report
+if (!profile.healthState) profile.healthState = { vitals: {}, lifestyle: {}, conditions: [], medications: [] };
+
+(analysis.extractedValues || []).forEach(v => {
+  const name = (v?.name || '').toLowerCase();
+
+  if (name.includes('glucose') || name.includes('blood sugar'))
+    profile.healthState.v
     // 6. Add timeline event
     const savedReport = profile.reports[profile.reports.length - 1];
     profile.timeline.push({
