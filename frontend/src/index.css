@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --pulse-primary: #0F172A;
+    --pulse-surface: #F8FAFC;
+    --pulse-border: #E2E8F0;
+    --pulse-muted: #94A3B8;
+  }
+
+  * { -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: var(--pulse-surface);
+    color: var(--pulse-primary);
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: fadeUp 0.18s ease-out both;
+  }
+  .animate-in-fast {
+    animation: fadeUp 0.12s ease-out both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
