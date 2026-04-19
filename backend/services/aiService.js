@@ -149,43 +149,58 @@ Generate structured summary.`;
 
 // ── Module 3: Health Twin ──────────────────────────────────
 async function computeRiskScore(healthState) {
-  const system = `You are a health risk assessment engine. Given a patient's health state, compute a risk score from 0-100 (0=very healthy, 100=critical risk) and explain the top drivers. Return ONLY valid JSON, no markdown:
-{
-  "riskScore": number,
-  "note": "one sentence naming the top 2-3 risk drivers"
-}
+  const system = `You are a clinical health risk assessment engine calibrated for Indian patients.
+Use Indian/Asian reference ranges:
+- Fasting glucose: normal 70-100 mg/dL, pre-diabetic 100-125, diabetic ≥126
+- HbA1c: normal <5.7%, pre-diabetic 5.7-6.4%, diabetic ≥6.5%, well-controlled diabetic target <7%
+- BP: normal <130/80 mmHg (JNC 8)
+- BMI: Asian normal 18-22.9, overweight 23-27.4, obese ≥27.5 (not the Western 25/30 cutoffs)
+- Indians have higher metabolic risk at lower BMI than Western populations
+
+Scoring: 0=very healthy, 100=critical. Return ONLY valid JSON, no markdown:
+{ "riskScore": number, "note": "one sentence naming the top 2-3 specific risk drivers with values" }
 
 Scoring guide:
-- Normal healthy adult: 10-25
-- One controlled condition: 25-40
-- Multiple conditions or poor lifestyle: 40-60
-- Uncontrolled conditions + poor adherence: 60-80
-- Critical values or emergency indicators: 80-100`;
+- Healthy young Indian adult, no conditions: 10-20
+- One well-controlled condition: 20-35
+- Pre-diabetes or borderline BP: 35-50
+- Uncontrolled diabetes or hypertension: 50-70
+- Multiple uncontrolled conditions or critical values: 70-90
+- Emergency indicators: 90-100`;
 
-  const user = `Health state:
+  const user = `Patient health state:
 Vitals: ${JSON.stringify(healthState.vitals || {})}
 Conditions: ${(healthState.conditions || []).join(', ') || 'none'}
 Medications: ${JSON.stringify(healthState.medications || [])}
-Lifestyle: ${JSON.stringify(healthState.lifestyle || {})}
+Lifestyle: sleep ${healthState.lifestyle?.sleepHours || 'unknown'} hrs/night, exercise ${healthState.lifestyle?.exercisePerWeek || 'unknown'} days/week
 
-Compute the risk score.`;
+Compute the risk score using Indian reference ranges.`;
 
   const raw = await callClaude(system, user);
-  return safeParseJSON(raw);
+  return parseJSON(raw);
 }
 
 async function runScenario(healthState, interventions, label) {
-  const system = `You are a health scenario advisor. Given a patient's current health state and a proposed lifestyle or medication intervention, estimate the new risk score and explain the causal chain. Return ONLY valid JSON, no markdown:
+  const system = `You are a health scenario advisor for Indian patients. Given a patient's current health state and a proposed lifestyle or medication intervention, estimate the projected risk score and explain the causal chain in simple language.
+
+Use Indian context — mention specific foods (dal, roti, chai, sabzi), Indian lifestyle patterns, and Indian reference ranges where relevant.
+
+Return ONLY valid JSON, no markdown:
 {
   "projectedRisk": number,
-  "causalExplanation": "2-3 sentences explaining exactly why this intervention changes the risk, mentioning specific health parameters"
-}`;
+  "causalExplanation": "2-3 sentences in simple language explaining exactly why this intervention changes the risk, mentioning specific parameters like glucose, BP, or HbA1c"
+}
+
+Rules:
+- projectedRisk must be a realistic change from current score (not more than 25 points change for single interventions)
+- Negative interventions (stopping meds, poor diet) should increase risk realistically
+- Be specific — don't just say "improves health", explain the mechanism`;
 
   const user = `Current health state:
 Vitals: ${JSON.stringify(healthState.vitals || {})}
 Conditions: ${(healthState.conditions || []).join(', ') || 'none'}
 Medications: ${JSON.stringify(healthState.medications || [])}
-Lifestyle: ${JSON.stringify(healthState.lifestyle || {})}
+Lifestyle: sleep ${healthState.lifestyle?.sleepHours || 'unknown'} hrs/night, exercise ${healthState.lifestyle?.exercisePerWeek || 'unknown'} days/week
 Current risk score: ${healthState.riskScore || 'unknown'}
 
 Scenario: "${label}"
@@ -194,7 +209,7 @@ Proposed interventions: ${JSON.stringify(interventions)}
 What is the projected risk and causal explanation?`;
 
   const raw = await callClaude(system, user);
-  return safeParseJSON(raw);
+  return parseJSON(raw);
 }
 
 module.exports = {
