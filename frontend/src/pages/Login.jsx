@@ -7,32 +7,105 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    setLoading(true); setError('');
+    setLoading(true); 
+    setError('');
+
     try {
       const { data } = await api.post('/auth/login', form);
-      login(data.token, { name: data.name, role: data.role, patientProfileId: data.patientProfileId });
+
+      login(data.token, {
+        name: data.name,
+        role: data.role,
+        patientProfileId: data.patientProfileId
+      });
+
       navigate(data.role === 'doctor' ? '/doctor' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Welcome to Pulse</h1>
-        <p className="text-gray-500 text-sm mb-6">Sign in to your account</p>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <input className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm mb-3 outline-none focus:border-blue-400" placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-        <input type="password" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm mb-5 outline-none focus:border-blue-400" placeholder="Password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
-        <button onClick={handleSubmit} disabled={loading} className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24
+    }}>
+
+      <div className="p-card" style={{ width: '100%', maxWidth: 420 }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <h1 className="p-title">Welcome to Pulse</h1>
+          <p className="p-subtitle">Sign in to your account</p>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid var(--danger)',
+            borderRadius: 10,
+            padding: '10px 12px',
+            marginBottom: 14
+          }}>
+            <span className="p-danger-text" style={{ fontSize: 13 }}>
+              {error}
+            </span>
+          </div>
+        )}
+
+        {/* Inputs */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input
+            className="p-input"
+            placeholder="Email"
+            value={form.email}
+            onChange={e => setForm({ ...form, email: e.target.value })}
+          />
+
+          <input
+            type="password"
+            className="p-input"
+            placeholder="Password"
+            value={form.password}
+            onChange={e => setForm({ ...form, password: e.target.value })}
+          />
+        </div>
+
+        {/* Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="p-btn-primary"
+          style={{ width: '100%', marginTop: 16, padding: '10px 0' }}
+        >
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
-        <p className="text-center text-sm text-gray-400 mt-4">No account? <Link to="/register" className="text-blue-600">Register</Link></p>
+
+        {/* Footer */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: 13,
+          color: 'var(--text2)',
+          marginTop: 16
+        }}>
+          No account?{' '}
+          <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 500 }}>
+            Register
+          </Link>
+        </p>
+
       </div>
     </div>
   );

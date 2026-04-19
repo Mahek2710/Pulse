@@ -4,36 +4,129 @@
 
 @layer base {
   :root {
-    --pulse-primary: #0F172A;
-    --pulse-surface: #F8FAFC;
-    --pulse-border: #E2E8F0;
-    --pulse-muted: #94A3B8;
+    --p-bg: #0a0a0a;
+    --p-card: #111111;
+    --p-card-hover: #161616;
+    --p-border: #1e1e1e;
+    --p-border-hover: #2a2a2a;
+    --p-text: #e0e0e0;
+    --p-muted: #555555;
+    --p-hint: #333333;
+    --p-accent: #c8f135;
+    --p-accent-dim: #1e2a0a;
+    --p-danger: #ff6b6b;
+    --p-danger-dim: #1a0d0d;
+    --p-warn: #faad14;
+    --p-warn-dim: #1e1a0a;
   }
 
-  * { -webkit-font-smoothing: antialiased; }
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
 
-  body {
-    background: var(--pulse-surface);
-    color: var(--pulse-primary);
+  html, body, #root {
+    background: var(--p-bg);
+    color: var(--p-text);
+    min-height: 100vh;
   }
 }
 
 @layer utilities {
-  .animate-in {
-    animation: fadeUp 0.18s ease-out both;
+  .p-card {
+    background: var(--p-card);
+    border: 1px solid var(--p-border);
+    border-radius: 14px;
+    padding: 18px;
   }
-  .animate-in-fast {
-    animation: fadeUp 0.12s ease-out both;
+  .p-card:hover { border-color: var(--p-border-hover); }
+
+  .p-num {
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    color: #fff;
   }
+
+  .p-label {
+    font-size: 10px;
+    color: var(--p-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  .p-section {
+    font-size: 11px;
+    color: var(--p-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .p-btn-primary {
+    background: var(--p-accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .p-btn-primary:hover { opacity: 0.88; }
+  .p-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .p-btn {
+    background: #161616;
+    color: #888;
+    border: 1px solid var(--p-border);
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .p-btn:hover { border-color: var(--p-border-hover); color: #aaa; }
+  .p-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .p-input {
+    background: #0d0d0d;
+    border: 1px solid var(--p-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--p-text);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .p-input:focus { border-color: var(--p-accent); }
+  .p-input::placeholder { color: var(--p-hint); }
+
+  .p-badge-good  { background: var(--p-accent-dim); color: var(--p-accent); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .p-badge-warn  { background: var(--p-warn-dim);   color: var(--p-warn);   font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .p-badge-bad   { background: var(--p-danger-dim); color: var(--p-danger); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .p-badge-neutral { background: #1a1a1a; color: #666; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+  .animate-in { animation: fadeUp 0.2s ease-out both; }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
   .skeleton {
-    background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
+    background: #161616;
     border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, #1e1e1e 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
   }
   @keyframes shimmer {
     0%   { background-position: 200% 0; }

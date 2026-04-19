@@ -2,20 +2,30 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-const statusStyles = {
-  normal:   { bg: 'bg-green-50',  text: 'text-green-700',  badge: 'Normal' },
-  low:      { bg: 'bg-amber-50',  text: 'text-amber-700',  badge: 'Low' },
-  high:     { bg: 'bg-red-50',    text: 'text-red-700',    badge: 'High' },
-  critical: { bg: 'bg-red-100',   text: 'text-red-800',    badge: 'Critical' }
+const statusMeta = (status) => {
+  const s = (status || '').toLowerCase();
+
+  if (s === 'low')
+    return { bg: 'var(--warn-dim)', color: 'var(--warn)', label: 'Low' };
+
+  if (s === 'high')
+    return { bg: 'var(--danger-dim)', color: 'var(--danger)', label: 'High' };
+
+  if (s === 'critical')
+    return { bg: 'var(--danger-dim)', color: 'var(--danger)', label: 'Critical' };
+
+  return { bg: 'var(--good-dim)', color: 'var(--good)', label: 'Normal' };
 };
 
 export default function ReportDetail() {
   const { reportId } = useParams();
   const navigate = useNavigate();
+
   const [report, setReport] = useState(null);
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState('');
+
   const chatEndRef = useRef(null);
 
   useEffect(() => { fetchReport(); }, [reportId]);
@@ -25,26 +35,53 @@ export default function ReportDetail() {
     try {
       const { data } = await api.get(`/reports/${reportId}`);
       setReport(data);
-    } catch { setError('Could not load report'); }
+    } catch {
+      setError('Could not load report');
+    }
   }
 
   async function handleAsk() {
     if (!question.trim()) return;
+
     setAsking(true);
     const q = question;
     setQuestion('');
+
     try {
       const { data } = await api.post(`/reports/${reportId}/ask`, { question: q });
       setReport(prev => ({ ...prev, qaThread: data.qaThread }));
     } catch (err) {
       setError(err.response?.data?.message || 'Could not get answer');
-    } finally { setAsking(false); }
+    } finally {
+      setAsking(false);
+    }
   }
 
-  if (error) return <div className="p-8 text-red-500">{error}</div>;
-  if (!report) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (error) return (
+    <div style={{ padding: 20 }}>
+      <span className="p-danger-text">{error}</span>
+    </div>
+  );
 
-  // ✅ FIXED FILTERING (SAFE)
+  if (!report) return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        width: 28,
+        height: 28,
+        border: '3px solid var(--accent)',
+        borderTopColor: 'transparent',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+    </div>
+  );
+
   const abnormal = (report.extractedValues || []).filter(
     v => ['high', 'low', 'critical'].includes((v?.status || '').toLowerCase())
   );
@@ -54,119 +91,146 @@ export default function ReportDetail() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      padding: '32px 24px'
+    }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate('/reports')} className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
-          <div className="w-px h-4 bg-gray-200" />
-          <h1 className="text-xl font-semibold text-gray-900">{report.reportType}</h1>
-          <span className="text-xs text-gray-400">{new Date(report.uploadedAt).toLocaleDateString('en-IN')}</span>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          marginBottom: 20
+        }}>
+          <button
+            onClick={() => navigate('/reports')}
+            className="p-btn"
+          >
+            ← Back
+          </button>
+
+          <h1 className="p-title">{report.reportType}</h1>
+
+          <span className="p-muted">
+            {new Date(report.uploadedAt).toLocaleDateString('en-IN')}
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 20
+        }}>
 
-          {/* Left */}
-          <div className="space-y-4">
+          {/* LEFT */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Summary */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5">
-              <p className="text-xs font-medium text-gray-400 uppercase mb-2">AI Summary</p>
-              <p className="text-sm text-gray-700">{report.overallSummary}</p>
+            <div className="p-card">
+              <p className="p-section">AI Summary</p>
+              <p className="p-body">{report.overallSummary}</p>
             </div>
 
             {/* Abnormal */}
             {abnormal.length > 0 && (
-              <div className="bg-white border border-gray-100 rounded-2xl p-5">
-                <p className="text-xs font-medium text-red-400 mb-3">
+              <div className="p-card">
+                <p className="p-danger-text" style={{ marginBottom: 10 }}>
                   Needs attention — {abnormal.length}
                 </p>
 
-                <div className="space-y-3">
-                  {abnormal.map((v, i) => {
-                    const s = statusStyles[v?.status] || statusStyles.normal;
+                {abnormal.map((v, i) => {
+                  const meta = statusMeta(v.status);
 
-                    return (
-                      <div key={i} className={`${s.bg} rounded-xl p-3.5`}>
-                        <div className="flex justify-between mb-1">
-                          <span className={`text-sm font-medium ${s.text}`}>
-                            {v?.name || 'Unknown Test'}
-                          </span>
+                  return (
+                    <div key={i} style={{
+                      background: meta.bg,
+                      borderRadius: 12,
+                      padding: 12,
+                      marginBottom: 10
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span style={{ color: meta.color, fontWeight: 600 }}>
+                          {v.name}
+                        </span>
 
-                          <div className="flex gap-2">
-                            <span className={`text-sm font-semibold ${s.text}`}>
-                              {v?.value ?? '-'} {v?.unit || ''}
-                            </span>
-
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-white">
-                              {s.badge}
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-xs text-gray-500">
-                          Normal: {v?.normalRange || '-'}
-                        </p>
-
-                        <p className="text-xs text-gray-600 mt-1">
-                          {v?.aiExplanation || ''}
-                        </p>
+                        <span style={{ color: meta.color }}>
+                          {v.value} {v.unit}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      <p className="p-muted" style={{ fontSize: 12 }}>
+                        Normal: {v.normalRange}
+                      </p>
+
+                      <p style={{ fontSize: 12, marginTop: 4 }}>
+                        {v.aiExplanation}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             {/* Normal */}
             {normal.length > 0 && (
-              <div className="bg-white border border-gray-100 rounded-2xl p-5">
-                <p className="text-xs font-medium text-green-500 mb-3">
+              <div className="p-card">
+                <p className="p-good-text" style={{ marginBottom: 10 }}>
                   Normal — {normal.length}
                 </p>
 
-                <div className="space-y-2">
-                  {normal.map((v, i) => (
-                    <div key={i} className="flex justify-between py-2">
-                      <span className="text-sm text-gray-600">
-                        {v?.name || 'Unknown Test'}
-                      </span>
-
-                      <div className="flex gap-3">
-                        <span className="text-xs text-gray-400">
-                          {v?.normalRange || '-'}
-                        </span>
-
-                        <span className="text-sm font-medium">
-                          {v?.value ?? '-'} {v?.unit || ''}
-                        </span>
-
-                        <span className="text-xs text-green-600 bg-green-50 px-2 rounded-full">
-                          Normal
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {normal.map((v, i) => (
+                  <div key={i} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '6px 0'
+                  }}>
+                    <span className="p-muted">{v.name}</span>
+                    <span>{v.value} {v.unit}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Right side unchanged */}
-          <div className="bg-white border border-gray-100 rounded-2xl flex flex-col" style={{ height: '600px' }}>
-            <div className="p-4 border-b">
-              <p className="text-sm font-medium">Ask about this report</p>
-            </div>
+          {/* RIGHT CHAT */}
+          <div className="p-card" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: 500
+          }}>
+            <p className="p-section" style={{ marginBottom: 10 }}>
+              Ask about this report
+            </p>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              marginBottom: 10
+            }}>
               {report.qaThread.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`px-3 py-2 rounded-xl ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
+                <div key={i} style={{
+                  display: 'flex',
+                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  marginBottom: 8
+                }}>
+                  <div style={{
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    background:
+                      msg.role === 'user'
+                        ? 'var(--accent)'
+                        : 'var(--bg-card2)',
+                    color:
+                      msg.role === 'user'
+                        ? '#fff'
+                        : 'var(--text)'
+                  }}>
                     {msg.content}
                   </div>
                 </div>
@@ -174,19 +238,27 @@ export default function ReportDetail() {
               <div ref={chatEndRef} />
             </div>
 
-            <div className="p-4 flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <input
-                className="flex-1 border px-3 py-2 rounded-xl"
+                className="p-input"
+                style={{ flex: 1 }}
                 value={question}
                 onChange={e => setQuestion(e.target.value)}
               />
-              <button onClick={handleAsk} className="bg-blue-600 text-white px-4 rounded-xl">
+
+              <button
+                onClick={handleAsk}
+                className="p-btn-primary"
+              >
                 Send
               </button>
             </div>
           </div>
+
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

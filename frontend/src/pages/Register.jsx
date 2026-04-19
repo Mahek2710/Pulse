@@ -4,44 +4,149 @@ import api from '../services/api';
 import useAuthStore from '../store/authStore';
 
 export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'patient' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'patient'
+  });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
+
     try {
       const { data } = await api.post('/auth/register', form);
-      login(data.token, { name: data.name, role: data.role, patientProfileId: data.patientProfileId });
+
+      login(data.token, {
+        name: data.name,
+        role: data.role,
+        patientProfileId: data.patientProfileId
+      });
+
       navigate(data.role === 'doctor' ? '/doctor' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Create your account</h1>
-        <p className="text-gray-500 text-sm mb-6">Join Pulse today</p>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <input className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm mb-3 outline-none focus:border-blue-400" placeholder="Full name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-        <input className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm mb-3 outline-none focus:border-blue-400" placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-        <input type="password" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm mb-3 outline-none focus:border-blue-400" placeholder="Password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
-        <div className="flex gap-2 mb-5">
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24
+    }}>
+
+      <div className="p-card" style={{ width: '100%', maxWidth: 420 }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 20 }}>
+          <h1 className="p-title">Create your account</h1>
+          <p className="p-subtitle">Join Pulse today</p>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: 'var(--danger-dim)',
+            border: '1px solid var(--danger)',
+            borderRadius: 10,
+            padding: '10px 12px',
+            marginBottom: 14
+          }}>
+            <span className="p-danger-text" style={{ fontSize: 13 }}>
+              {error}
+            </span>
+          </div>
+        )}
+
+        {/* Inputs */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input
+            className="p-input"
+            placeholder="Full name"
+            value={form.name}
+            onChange={e => setForm({ ...form, name: e.target.value })}
+          />
+
+          <input
+            className="p-input"
+            placeholder="Email"
+            value={form.email}
+            onChange={e => setForm({ ...form, email: e.target.value })}
+          />
+
+          <input
+            type="password"
+            className="p-input"
+            placeholder="Password"
+            value={form.password}
+            onChange={e => setForm({ ...form, password: e.target.value })}
+          />
+        </div>
+
+        {/* Role selector */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           {['patient', 'doctor'].map(r => (
-            <button key={r} onClick={() => setForm({...form, role: r})}
-              className={`flex-1 py-2 rounded-lg text-sm capitalize border transition-colors ${form.role === r ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-500 hover:border-blue-300'}`}>
+            <button
+              key={r}
+              onClick={() => setForm({ ...form, role: r })}
+              style={{
+                flex: 1,
+                padding: '8px 0',
+                borderRadius: 10,
+                fontSize: 13,
+                textTransform: 'capitalize',
+                border: `1px solid ${
+                  form.role === r ? 'var(--accent)' : 'var(--border)'
+                }`,
+                background:
+                  form.role === r ? 'var(--accent-dim)' : 'var(--bg-card2)',
+                color:
+                  form.role === r ? 'var(--accent)' : 'var(--text2)',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
               {r}
             </button>
           ))}
         </div>
-        <button onClick={handleSubmit} disabled={loading} className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+
+        {/* Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="p-btn-primary"
+          style={{ width: '100%', marginTop: 18, padding: '10px 0' }}
+        >
           {loading ? 'Creating account...' : 'Create account'}
         </button>
-        <p className="text-center text-sm text-gray-400 mt-4">Have an account? <Link to="/login" className="text-blue-600">Sign in</Link></p>
+
+        {/* Footer */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: 13,
+          color: 'var(--text2)',
+          marginTop: 16
+        }}>
+          Have an account?{' '}
+          <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 500 }}>
+            Sign in
+          </Link>
+        </p>
+
       </div>
     </div>
   );
