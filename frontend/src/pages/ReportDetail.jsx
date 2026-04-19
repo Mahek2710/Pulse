@@ -57,28 +57,30 @@ export default function ReportDetail() {
     }
   }
 
+  // ── ERROR ──
   if (error) return (
-    <div style={{ padding: 20 }}>
-      <span className="p-danger-text">{error}</span>
+    <div className="p-page">
+      <div className="p-page-inner animate-in">
+        <div style={{ padding: 20 }}>
+          <span className="p-danger-text">{error}</span>
+        </div>
+      </div>
     </div>
   );
 
+  // ── LOADING ──
   if (!report) return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <div style={{
-        width: 28,
-        height: 28,
-        border: '3px solid var(--accent)',
-        borderTopColor: 'transparent',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
+    <div className="p-page">
+      <div className="p-page-inner flex items-center justify-center">
+        <div style={{
+          width: 28,
+          height: 28,
+          border: '3px solid var(--accent)',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
     </div>
   );
 
@@ -90,172 +92,170 @@ export default function ReportDetail() {
     v => (v?.status || '').toLowerCase() === 'normal'
   );
 
+  // ── MAIN ──
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg)',
-      padding: '32px 24px'
-    }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className="p-page">
+      <div className="p-page-inner animate-in">
 
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 20
-        }}>
-          <button
-            onClick={() => navigate('/reports')}
-            className="p-btn"
-          >
-            ← Back
-          </button>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
-          <h1 className="p-title">{report.reportType}</h1>
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 20
+          }}>
+            <button
+              onClick={() => navigate('/reports')}
+              className="p-btn"
+            >
+              ← Back
+            </button>
 
-          <span className="p-muted">
-            {new Date(report.uploadedAt).toLocaleDateString('en-IN')}
-          </span>
-        </div>
+            <h1 className="p-title">{report.reportType}</h1>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 20
-        }}>
+            <span className="p-muted">
+              {new Date(report.uploadedAt).toLocaleDateString('en-IN')}
+            </span>
+          </div>
 
-          {/* LEFT */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 20
+          }}>
 
-            {/* Summary */}
-            <div className="p-card">
-              <p className="p-section">AI Summary</p>
-              <p className="p-body">{report.overallSummary}</p>
+            {/* LEFT */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              <div className="p-card">
+                <p className="p-section">AI Summary</p>
+                <p className="p-body">{report.overallSummary}</p>
+              </div>
+
+              {abnormal.length > 0 && (
+                <div className="p-card">
+                  <p className="p-danger-text" style={{ marginBottom: 10 }}>
+                    Needs attention — {abnormal.length}
+                  </p>
+
+                  {abnormal.map((v, i) => {
+                    const meta = statusMeta(v.status);
+
+                    return (
+                      <div key={i} style={{
+                        background: meta.bg,
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 10
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between'
+                        }}>
+                          <span style={{ color: meta.color, fontWeight: 600 }}>
+                            {v.name}
+                          </span>
+
+                          <span style={{ color: meta.color }}>
+                            {v.value} {v.unit}
+                          </span>
+                        </div>
+
+                        <p className="p-muted" style={{ fontSize: 12 }}>
+                          Normal: {v.normalRange}
+                        </p>
+
+                        <p style={{ fontSize: 12, marginTop: 4 }}>
+                          {v.aiExplanation}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {normal.length > 0 && (
+                <div className="p-card">
+                  <p className="p-good-text" style={{ marginBottom: 10 }}>
+                    Normal — {normal.length}
+                  </p>
+
+                  {normal.map((v, i) => (
+                    <div key={i} style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '6px 0'
+                    }}>
+                      <span className="p-muted">{v.name}</span>
+                      <span>{v.value} {v.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Abnormal */}
-            {abnormal.length > 0 && (
-              <div className="p-card">
-                <p className="p-danger-text" style={{ marginBottom: 10 }}>
-                  Needs attention — {abnormal.length}
-                </p>
+            {/* RIGHT CHAT */}
+            <div className="p-card" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: 500
+            }}>
+              <p className="p-section" style={{ marginBottom: 10 }}>
+                Ask about this report
+              </p>
 
-                {abnormal.map((v, i) => {
-                  const meta = statusMeta(v.status);
-
-                  return (
-                    <div key={i} style={{
-                      background: meta.bg,
-                      borderRadius: 12,
-                      padding: 12,
-                      marginBottom: 10
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between'
-                      }}>
-                        <span style={{ color: meta.color, fontWeight: 600 }}>
-                          {v.name}
-                        </span>
-
-                        <span style={{ color: meta.color }}>
-                          {v.value} {v.unit}
-                        </span>
-                      </div>
-
-                      <p className="p-muted" style={{ fontSize: 12 }}>
-                        Normal: {v.normalRange}
-                      </p>
-
-                      <p style={{ fontSize: 12, marginTop: 4 }}>
-                        {v.aiExplanation}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Normal */}
-            {normal.length > 0 && (
-              <div className="p-card">
-                <p className="p-good-text" style={{ marginBottom: 10 }}>
-                  Normal — {normal.length}
-                </p>
-
-                {normal.map((v, i) => (
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                marginBottom: 10
+              }}>
+                {report.qaThread.map((msg, i) => (
                   <div key={i} style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '6px 0'
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    marginBottom: 8
                   }}>
-                    <span className="p-muted">{v.name}</span>
-                    <span>{v.value} {v.unit}</span>
+                    <div style={{
+                      padding: '8px 12px',
+                      borderRadius: 10,
+                      background:
+                        msg.role === 'user'
+                          ? 'var(--accent)'
+                          : 'var(--bg-card2)',
+                      color:
+                        msg.role === 'user'
+                          ? '#fff'
+                          : 'var(--text)'
+                    }}>
+                      {msg.content}
+                    </div>
                   </div>
                 ))}
+                <div ref={chatEndRef} />
               </div>
-            )}
-          </div>
 
-          {/* RIGHT CHAT */}
-          <div className="p-card" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: 500
-          }}>
-            <p className="p-section" style={{ marginBottom: 10 }}>
-              Ask about this report
-            </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  className="p-input"
+                  style={{ flex: 1 }}
+                  value={question}
+                  onChange={e => setQuestion(e.target.value)}
+                />
 
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              marginBottom: 10
-            }}>
-              {report.qaThread.map((msg, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  marginBottom: 8
-                }}>
-                  <div style={{
-                    padding: '8px 12px',
-                    borderRadius: 10,
-                    background:
-                      msg.role === 'user'
-                        ? 'var(--accent)'
-                        : 'var(--bg-card2)',
-                    color:
-                      msg.role === 'user'
-                        ? '#fff'
-                        : 'var(--text)'
-                  }}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
+                <button
+                  onClick={handleAsk}
+                  className="p-btn-primary"
+                >
+                  Send
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                className="p-input"
-                style={{ flex: 1 }}
-                value={question}
-                onChange={e => setQuestion(e.target.value)}
-              />
-
-              <button
-                onClick={handleAsk}
-                className="p-btn-primary"
-              >
-                Send
-              </button>
-            </div>
           </div>
-
         </div>
+
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

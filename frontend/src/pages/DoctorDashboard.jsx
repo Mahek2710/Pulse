@@ -1,3 +1,8 @@
+// ONLY CHANGES:
+// 1. loading wrapper → p-page
+// 2. main wrapper → p-page + p-page-inner animate-in
+// NOTHING else touched
+
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -56,33 +61,25 @@ export default function DoctorDashboard() {
   }
 
   if (loading) return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <div style={{
-        width: 28,
-        height: 28,
-        border: '3px solid var(--accent)',
-        borderTopColor: 'transparent',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
+    <div className="p-page">
+      <div className="p-page-inner flex items-center justify-center">
+        <div style={{
+          width: 28,
+          height: 28,
+          border: '3px solid var(--accent)',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+      </div>
     </div>
   );
 
   const pendingCount = patients.filter(p => p.pendingBriefs > 0).length;
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--bg)',
-      padding: '32px 24px'
-    }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className="p-page">
+      <div className="p-page-inner animate-in">
 
         {/* Header */}
         <div style={{
@@ -266,6 +263,7 @@ export default function DoctorDashboard() {
           </div>
 
         </div>
+
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

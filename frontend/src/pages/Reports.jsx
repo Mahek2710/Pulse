@@ -94,105 +94,107 @@ export default function Dashboard() {
 
   return (
     <div className="p-page">
+      <div className="p-page-inner animate-in">
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-7">
-        <div>
-          <h1 className="p-title">
-            Good{" "}
-            {new Date().getHours() < 12
-              ? "morning"
-              : new Date().getHours() < 17
-              ? "afternoon"
-              : "evening"}
-            , {user?.name?.split(' ')[0]}
-          </h1>
+        {/* Header */}
+        <div className="flex items-start justify-between mb-7">
+          <div>
+            <h1 className="p-title">
+              Good{" "}
+              {new Date().getHours() < 12
+                ? "morning"
+                : new Date().getHours() < 17
+                ? "afternoon"
+                : "evening"}
+              , {user?.name?.split(' ')[0]}
+            </h1>
 
-          <p className="p-subtitle">
-            {new Date().toLocaleDateString('en-IN', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </p>
+            <p className="p-subtitle">
+              {new Date().toLocaleDateString('en-IN', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
         </div>
+
+        {/* Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+
+          <div className={`${rc.bg} p-card`}>
+            <p className="p-muted mb-1">Risk score</p>
+            <p className={`text-3xl font-semibold ${rc.text}`}>
+              {data?.riskScore ?? '--'}
+            </p>
+            <p className={`text-xs ${rc.text}`}>{rc.label}</p>
+          </div>
+
+          <div className="p-card">
+            <p className="p-muted mb-1">Reports</p>
+            <p className="text-3xl font-semibold p-num">
+              {data?.reportCount || 0}
+            </p>
+          </div>
+
+          <div className="p-card">
+            <p className="p-muted mb-1">Glucose</p>
+            <p className="text-3xl font-semibold p-num">
+              {data?.vitals?.glucose || '--'}
+            </p>
+          </div>
+
+          <div className="p-card">
+            <p className="p-muted mb-1">Scenarios</p>
+            <p className="text-3xl font-semibold p-num">
+              {data?.scenarioCount || 0}
+            </p>
+          </div>
+
+        </div>
+
+        {/* Chart */}
+        {riskHistory.length > 1 && (
+          <div className="p-card">
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={riskHistory}>
+
+                <CartesianGrid stroke="var(--chart-grid)" />
+
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: 'var(--chart-text)', fontSize: 11 }}
+                />
+
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fill: 'var(--chart-text)', fontSize: 11 }}
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    color: 'var(--text)'
+                  }}
+                />
+
+                <ReferenceLine y={70} stroke="var(--danger)" />
+
+                <Line
+                  type="monotone"
+                  dataKey="score"
+                  stroke="var(--accent)"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
       </div>
-
-      {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-
-        <div className={`${rc.bg} p-card`}>
-          <p className="p-muted mb-1">Risk score</p>
-          <p className={`text-3xl font-semibold ${rc.text}`}>
-            {data?.riskScore ?? '--'}
-          </p>
-          <p className={`text-xs ${rc.text}`}>{rc.label}</p>
-        </div>
-
-        <div className="p-card">
-          <p className="p-muted mb-1">Reports</p>
-          <p className="text-3xl font-semibold p-num">
-            {data?.reportCount || 0}
-          </p>
-        </div>
-
-        <div className="p-card">
-          <p className="p-muted mb-1">Glucose</p>
-          <p className="text-3xl font-semibold p-num">
-            {data?.vitals?.glucose || '--'}
-          </p>
-        </div>
-
-        <div className="p-card">
-          <p className="p-muted mb-1">Scenarios</p>
-          <p className="text-3xl font-semibold p-num">
-            {data?.scenarioCount || 0}
-          </p>
-        </div>
-
-      </div>
-
-      {/* Chart */}
-      {riskHistory.length > 1 && (
-        <div className="p-card">
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={riskHistory}>
-
-              <CartesianGrid stroke="var(--chart-grid)" />
-
-              <XAxis
-                dataKey="date"
-                tick={{ fill: 'var(--chart-text)', fontSize: 11 }}
-              />
-
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fill: 'var(--chart-text)', fontSize: 11 }}
-              />
-
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 10,
-                  color: 'var(--text)'
-                }}
-              />
-
-              <ReferenceLine y={70} stroke="var(--danger)" />
-
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="var(--accent)"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
     </div>
   );
 }

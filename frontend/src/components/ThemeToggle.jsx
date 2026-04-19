@@ -5,26 +5,42 @@ export default function ThemeToggle() {
   const isDark = theme === 'dark';
 
   return (
-    <button onClick={toggle} style={{
-      display: 'flex', alignItems: 'center', gap: 7,
-      background: 'var(--bg-card2)', border: '1px solid var(--border)',
-      borderRadius: 10, padding: '5px 10px 5px 5px', cursor: 'pointer'
-    }}>
-      <div style={{
-        width: 34, height: 18, borderRadius: 20,
-        background: isDark ? 'var(--accent)' : 'var(--border2)',
-        position: 'relative', transition: 'background .2s', flexShrink: 0
+    <button
+      onClick={toggle}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        background: 'var(--bg-card2)',
+        border: '1px solid var(--border)',
+        borderRadius: 50,
+        padding: 3,
+        cursor: 'pointer',
+        transition: 'border-color .2s'
+      }}
+    >
+      {/* moon */}
+      <span style={{
+        width: 28, height: 28, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 14,
+        background: isDark ? 'var(--bg-card)' : 'transparent',
+        boxShadow: isDark ? 'var(--shadow)' : 'none',
+        transition: 'background .2s, box-shadow .2s'
       }}>
-        <div style={{
-          width: 12, height: 12, borderRadius: '50%',
-          background: isDark ? 'var(--bg)' : '#fff',
-          position: 'absolute', top: 3,
-          left: isDark ? 3 : 19,
-          transition: 'left .2s'
-        }}/>
-      </div>
-      <span style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 500 }}>
-        {isDark ? 'Dark' : 'Light'}
+        🌙
+      </span>
+      {/* sun */}
+      <span style={{
+        width: 28, height: 28, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 14,
+        background: !isDark ? 'var(--bg-card)' : 'transparent',
+        boxShadow: !isDark ? 'var(--shadow)' : 'none',
+        transition: 'background .2s, box-shadow .2s'
+      }}>
+        ☀️
       </span>
     </button>
   );

@@ -83,7 +83,7 @@ export default function Dashboard() {
   return (
     <div className="p-page transition-colors">
 
-      <div className="p-page-inner">
+      <div className="p-page-inner animate-in">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-7">

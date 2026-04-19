@@ -199,17 +199,17 @@ export default function HealthTwin() {
   }
 
   // ── loading ──────────────────────────────────────────────
-  if (loading) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '32px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-in">
-        <SkeletonMetrics count={3} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          <SkeletonCard lines={5} />
-          <SkeletonCard lines={5} />
-        </div>
+if (loading) return (
+  <div className="p-page">
+    <div className="p-page-inner animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <SkeletonMetrics count={3} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <SkeletonCard lines={5} />
+        <SkeletonCard lines={5} />
       </div>
     </div>
-  );
+  </div>
+);
 
   const hasHealthState = state && (state.vitals?.glucose || state.conditions?.length || state.medications?.length);
   const riskHistory = state?.riskHistory?.map(h => ({
@@ -218,28 +218,28 @@ export default function HealthTwin() {
     note:  h.note
   })) || [];
 
-  // ── render ───────────────────────────────────────────────
-  return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '32px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }} className="animate-in">
+ // ── render ───────────────────────────────────────────────
+return (
+  <div className="p-page">
+    <div className="p-page-inner animate-in">
 
-        {/* ── page header ── */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
-          <div>
-            <h1 className="p-title">Health Twin</h1>
-            <p className="p-subtitle">Model your health and test what-if scenarios</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="p-btn" onClick={() => setShowSetup(true)}>Update profile</button>
-            <button
-              className="p-btn-primary"
-              onClick={refreshRisk}
-              disabled={refreshing || !hasHealthState}
-            >
-              {refreshing ? 'Computing...' : 'Compute risk score'}
-            </button>
-          </div>
+      {/* ── page header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
+        <div>
+          <h1 className="p-title">Health Twin</h1>
+          <p className="p-subtitle">Model your health and test what-if scenarios</p>
         </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="p-btn" onClick={() => setShowSetup(true)}>Update profile</button>
+          <button
+            className="p-btn-primary"
+            onClick={refreshRisk}
+            disabled={refreshing || !hasHealthState}
+          >
+            {refreshing ? 'Computing...' : 'Compute risk score'}
+          </button>
+        </div>
+      </div>
 
         {/* ── error ── */}
         {error && (
