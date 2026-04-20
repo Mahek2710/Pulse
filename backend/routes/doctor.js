@@ -1,41 +1,47 @@
 const express = require('express');
-const router = express.Router();
-const auth = require('../middleware/auth');
+const router  = express.Router();
+const auth    = require('../middleware/auth');
 const roleCheck = require('../middleware/roleCheck');
 const Patient = require('../models/Patient');
-const User = require('../models/User');
+const User    = require('../models/User');
 
 // GET /api/doctor/patients
+// Returns only patients assigned to this doctor
+// In dev: if no assignments exist, returns all patients (with a flag)
 router.get('/patients', auth, roleCheck('doctor'), async (req, res) => {
   try {
-    const patientUsers = await User.find({ role: 'patient' });
-    const profiles = await Promise.all(
-      patientUsers.map(u => Patient.findById(u.patientProfileId)
-        .select('name healthState reports intakeSessions timeline'))
-    );
+    const doctorId = req.user.userId;
 
-    const list = profiles.filter(Boolean).map(p => ({
-      _id: p._id,
-      name: p.name,
-      riskScore: p.healthState?.riskScore ?? null,
-      conditions: p.healthState?.conditions || [],
-      reportCount: p.reports.length,
-      lastVisit: p.timeline.filter(t => t.eventType === 'intake_submitted').slice(-1)[0]?.eventAt || null,
-      pendingBriefs: p.intakeSessions.filter(s => s.status === 'submitted').length
-    }));
+    // find patients assigned to this doctor
+    let patientProfiles = await Patient.find({ assignedDoctorId: doctorId })
+      .select('name healthState reports intakeSessions timeline');
 
-    res.json(list);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    const isUnassigned = patientProfiles.length === 0;
 
-// GET /api/doctor/patient/:patientId
-router.get('/patient/:patientId', auth, roleCheck('doctor'), async (req, res) => {
-  try {
-    const profile = await Patient.findById(req.params.patientId);
-    if (!profile) return res.status(404).json({ message: 'Patient not found' });
-    res.json(profile);
+    // dev fallback — show all patients but flag it
+    if (isUnassigned) {
+      patientProfiles = await Patient.find({})
+        .select('name healthState reports intakeSessions timeline');
+    }
+
+    const list = patientProfiles.map(p => {
+      const submittedSessions = p.intakeSessions.filter(s => s.status === 'submitted' || s.status === 'reviewed');
+      const lastSession = submittedSessions.at(-1);
+      return {
+        _id:            p._id,
+        name:           p.name,
+        riskScore:      p.healthState?.riskScore ?? null,
+        conditions:     p.healthState?.conditions || [],
+        medications:    p.healthState?.medications || [],
+        reportCount:    p.reports.length,
+        pendingBriefs:  p.intakeSessions.filter(s => s.status === 'submitted').length,
+        lastCheckIn:    lastSession?.createdAt || null,
+        lastComplaint:  lastSession?.doctorBrief?.chiefComplaint || null,
+        lastUrgency:    lastSession?.doctorBrief?.urgencyLevel || null,
+      };
+    });
+
+    res.json({ patients: list, isUnassigned });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -44,17 +50,39 @@ router.get('/patient/:patientId', auth, roleCheck('doctor'), async (req, res) =>
 // GET /api/doctor/patient/:patientId/briefs
 router.get('/patient/:patientId/briefs', auth, roleCheck('doctor'), async (req, res) => {
   try {
-    const profile = await Patient.findById(req.params.patientId).select('intakeSessions name');
+    const profile = await Patient.findById(req.params.patientId)
+      .select('intakeSessions name healthState');
+    if (!profile) return res.status(404).json({ message: 'Patient not found' });
+
     const briefs = profile.intakeSessions
       .filter(s => s.status === 'submitted' || s.status === 'reviewed')
       .reverse()
       .map(s => ({
-        _id: s._id,
-        createdAt: s.createdAt,
-        status: s.status,
-        doctorBrief: s.doctorBrief
+        _id:        s._id,
+        createdAt:  s.createdAt,
+        status:     s.status,
+        doctorBrief: s.doctorBrief || null
       }));
-    res.json({ patientName: profile.name, briefs });
+
+    res.json({
+      patientName: profile.name,
+      healthState: profile.healthState,
+      briefs
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/doctor/assign
+// Assign a patient to this doctor
+router.post('/assign', auth, roleCheck('doctor'), async (req, res) => {
+  try {
+    const { patientProfileId } = req.body;
+    await Patient.findByIdAndUpdate(patientProfileId, {
+      assignedDoctorId: req.user.userId
+    });
+    res.json({ message: 'Patient assigned' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
