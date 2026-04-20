@@ -1,4 +1,4 @@
-# 🚀 Pulse – AI Healthcare Platform
+# 🚀 Pulse – Healthcare Platform
 
 > An NLP-powered healthcare system that transforms unstructured patient data into structured, actionable insights.
 
