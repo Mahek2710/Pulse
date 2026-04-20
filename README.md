@@ -128,7 +128,7 @@ The system follows a modular architecture:
 
 ```bash
 # Clone the repo
-git clone <your-repo-link>
+git clone https://github.com/Mahek2710/Pulse
 
 # Install dependencies
 cd backend
